@@ -3,8 +3,26 @@
   "version": "1.0.0",
   "description": "Mind.js based API server for Quote app with all necessary CI/CD integrations",
   "main": "src/main.js",
+  "engines": {
+    "node": ">=10.15.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:env": "npm run start:env:pm2-runtime",
+    "start:env:pm2": "npm run pm2:kill && pm2 start ./src/main.js -i 0",
+    "start:env:pm2-runtime": "pm2-runtime start ./src/main.js -i 0",
+    "start:dev:pm2": "npm run pm2:kill && pm2 start ./src/main.js --watch=\"src\" --no-daemon --node-args=\"--inspect\" -i 1 -f",
+    "pm2:kill": "pm2 kill",
+    "lint": "eslint src --ignore-pattern \"*.spec.js\" --ignore-pattern \"*.test.js\" --ignore-pattern \"node_modules\"",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "jest --config=jest.config.json",
+    "release": "standard-version"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint",
+      "pre-push": "npm test",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   },
   "repository": {
     "type": "git",
