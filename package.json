@@ -1,0 +1,38 @@
+{
+  "name": "quote-app-api",
+  "version": "1.0.0",
+  "description": "Mind.js based API server for Quote app with all necessary CI/CD integrations",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boale/quoteAppAPI.git"
+  },
+  "author": "Oleksandr Bondarenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/boale/quoteAppAPI/issues"
+  },
+  "homepage": "https://github.com/boale/quoteAppAPI#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@mindjs/testing": "^1.1.1",
+    "eslint": "^6.8.0",
+    "eslint-plugin-node": "^11.1.0",
+    "husky": "^4.2.3",
+    "jest": "^25.2.7",
+    "standard-version": "^7.1.0",
+    "supertest": "^4.0.2"
+  },
+  "dependencies": {
+    "@mindjs/common": "^1.1.1",
+    "@mindjs/core": "^1.1.1",
+    "@mindjs/platform-koa": "^1.1.1",
+    "@mindjs/routing": "^1.1.1",
+    "pm2": "^4.2.3",
+    "quotesy": "^1.0.5"
+  }
+}
