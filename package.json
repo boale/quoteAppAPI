@@ -37,7 +37,7 @@
   "devDependencies": {
     "@commitlint/cli": "^8.3.5",
     "@commitlint/config-conventional": "^8.3.4",
-    "@mindjs/testing": "^1.1.1",
+    "@mindjs/testing": "^1.2.0",
     "eslint": "^6.8.0",
     "eslint-plugin-node": "^11.1.0",
     "husky": "^4.2.3",
@@ -46,10 +46,10 @@
     "supertest": "^4.0.2"
   },
   "dependencies": {
-    "@mindjs/common": "^1.1.1",
-    "@mindjs/core": "^1.1.1",
-    "@mindjs/platform-koa": "^1.1.1",
-    "@mindjs/routing": "^1.1.1",
+    "@mindjs/common": "^1.2.0",
+    "@mindjs/core": "^1.2.0",
+    "@mindjs/platform-koa": "^1.2.0",
+    "@mindjs/routing": "^1.2.0",
     "pm2": "^4.2.3",
     "quotesy": "^1.0.5"
   }
