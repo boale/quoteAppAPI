@@ -37,4 +37,4 @@ RUN npm test
 # RUN bash <(curl -s https://codecov.io/bash) -t $CODE_COV_TOKEN
 RUN curl -s https://codecov.io/bash | bash -s -t $(echo $CODECOV_TOKEN)
 # RUN ./cc-test-reporter after-build -t lcov -r $CODE_CLIMATE_REPORTER_ID --exit-code $?
-RUN /cc-test-reporter -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID)
+RUN /cc-test-reporter after-build -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID)
