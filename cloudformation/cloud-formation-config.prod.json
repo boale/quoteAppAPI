@@ -1,0 +1,17 @@
+{
+  "Parameters" : {
+    "ClusterName": "",
+    "Image": "",
+    "HostedZoneResource": "",
+    "HostedZoneResourceId": "",
+    "AmwEnvConfiguration": "",
+    "DesiredNumberOfTasks": "2",
+    "MaximumNumberOfTasks": "2",
+    "VPC": "",
+    "LoadBalancerSubnetIds": "",
+    "ECSSubnetIds": "",
+    "ECSTaskExecutionRole": "",
+    "ECSAutoScalingRole": "",
+    "LoadBalancerCertificateArn": ""
+  }
+}

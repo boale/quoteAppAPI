@@ -1,0 +1,50 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKER_REPOSITORY_URI: ""
+    CODE_CLIMATE_REPORTER_ID: ""
+    CODECOV_TOKEN: ""
+
+phases:
+
+  install:
+    runtime-versions:
+      docker: 18
+
+  pre_build:
+    commands:
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+
+      - echo Runninging code quality tools
+      - docker build --build-arg ENV_CONFIGURATION=test --build-arg CODE_CLIMATE_REPORTER_ID=${CODE_CLIMATE_REPORTER_ID} --build-arg CODECOV_TOKEN=${CODECOV_TOKEN} --build-arg GIT_COMMIT_SHA=${$CODEBUILD_RESOLVED_SOURCE_VERSION} -f Dockerfile_quality .
+      - echo Code Quality check is passed
+
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login --no-include-email --region us-east-1)
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $DOCKER_REPOSITORY_URI:latest .
+      - docker tag $DOCKER_REPOSITORY_URI:latest $DOCKER_REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $DOCKER_REPOSITORY_URI:latest
+      - docker push $DOCKER_REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - echo $IMAGE_TAG
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo $COMMIT_HASH
+      - printf '{"Image":"%s"}' $DOCKER_REPOSITORY_URI:$IMAGE_TAG > image-def.json
+      - cat image-def.json
+
+artifacts:
+  files:
+    - image-def.json

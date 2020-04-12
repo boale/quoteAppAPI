@@ -1,0 +1,40 @@
+FROM node:12-alpine
+
+ARG ENV_CONFIGURATION="test"
+ARG NODE_ENV="production"
+ARG CODE_CLIMATE_REPORTER_ID=""
+ARG CODECOV_TOKEN=""
+ARG GIT_COMMIT_SHA=""
+
+RUN apk add --update
+RUN apk add unzip
+RUN apk add git
+RUN apk --no-cache add ca-certificates wget
+
+# Set up all necessary/required env variables and Install CodeClimate reporter.
+# export GIT_COMMIT_SHA="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION)"
+RUN export GIT_COMMITTED_AT="$(date +%s)"
+RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+RUN chmod +x ./cc-test-reporter
+# RUN ./cc-test-reporter before-build
+
+# use changes to package.json to force Docker not to use the cache
+# when we change our application's nodejs dependencies:
+COPY package.json /tmp/package.json
+COPY package-lock.json /tmp/package-lock.json
+RUN cd /tmp && npm install
+RUN mkdir -p /quote-app-api && cp -a /tmp/node_modules /quote-app-api
+
+# From here we load our application's code in, therefore the previous docker
+# "layer" that has been cached, will be used if possible
+WORKDIR /quote-app-api
+COPY . /quote-app-api
+
+RUN npm run lint
+RUN npm test
+
+# Upload test coverage report to CodeCov and CodeClimate.
+# RUN bash <(curl -s https://codecov.io/bash) -t $CODE_COV_TOKEN
+RUN curl -s https://codecov.io/bash | bash -s -t $(echo $CODECOV_TOKEN)
+# RUN ./cc-test-reporter after-build -t lcov -r $CODE_CLIMATE_REPORTER_ID --exit-code $?
+RUN ./cc-test-reporter -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID)
