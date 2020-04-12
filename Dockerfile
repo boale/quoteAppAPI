@@ -1,5 +1,7 @@
 FROM node:12-alpine
 
+ARG NODE_ENV="production"
+
 RUN apk add --update
 RUN apk add unzip
 RUN apk add git
