@@ -9,6 +9,7 @@ ARG GIT_COMMIT_SHA=""
 RUN apk add --update
 RUN apk add unzip
 RUN apk add git
+RUN apk add curl
 RUN apk --no-cache add ca-certificates wget
 
 # Set up all necessary/required env variables and Install CodeClimate reporter.
