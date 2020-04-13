@@ -14,7 +14,6 @@ ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
 ARG GIT_BRANCH
 ENV GIT_BRANCH=$GIT_BRANCH
-ENV GIT_COMMITTED_AT="$(date +%s)"
 
 RUN apk add --update
 RUN apk add unzip
@@ -44,4 +43,4 @@ RUN npm test
 # Upload test coverage report to CodeCov and CodeClimate.
 RUN curl -s https://codecov.io/bash | bash -s -t $(echo $CODECOV_TOKEN)
 # RUN ./cc-test-reporter after-build -t lcov -r $CODE_CLIMATE_REPORTER_ID --exit-code $?
-RUN /cc-test-reporter after-build --debug -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID) -p ./coverage
+RUN export GIT_COMMITTED_AT="$(date +%s)" && /cc-test-reporter after-build --debug -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID) -p ./coverage
