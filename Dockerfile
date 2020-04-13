@@ -2,7 +2,7 @@ FROM node:12-alpine
 
 ARG NODE_ENV="production"
 
-ENV PORT: 80
+ENV PORT=80
 
 RUN apk add --update
 RUN apk add unzip
