@@ -9,7 +9,7 @@
   "scripts": {
     "start:env": "npm run start:env:pm2-runtime",
     "start:env:pm2": "npm run pm2:kill && pm2 start ./src/main.js -i 0",
-    "start:env:pm2-runtime": "pm2-runtime start ./src/main.js -i 0",
+    "start:env:pm2-runtime": "pm2-runtime start ./src/main.js -i 1",
     "start:dev:pm2": "npm run pm2:kill && pm2 start ./src/main.js --watch=\"src\" --no-daemon --node-args=\"--inspect\" -i 1 -f",
     "pm2:kill": "pm2 kill",
     "lint": "eslint src --ignore-pattern \"*.spec.js\" --ignore-pattern \"*.test.js\" --ignore-pattern \"node_modules\"",
