@@ -4,7 +4,7 @@
     "Image": "",
     "HostedZoneResource": "",
     "HostedZoneResourceId": "",
-    "AmwEnvConfiguration": "",
+    "EnvConfiguration": "",
     "DesiredNumberOfTasks": "1",
     "MaximumNumberOfTasks": "1",
     "VPC": "",
