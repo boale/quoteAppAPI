@@ -20,7 +20,7 @@ Parameters:
   NodeEnvValue:
     Type: String
     Default: 'production'
-  AmwEnvConfiguration:
+  EnvConfiguration:
     Type: String
     Default: 'test'
   DynatraceCustomProp:
@@ -182,10 +182,8 @@ Resources:
               Value: !Ref NodeEnvValue
             - Name: PORT
               Value: !Ref ContainerPort
-            - Name: AMW_ENV_CONFIGURATION
-              Value: !Ref AmwEnvConfiguration
-            - Name: AMW_API_GTW_URL
-              Value: !Ref AmwApiGtwUrl
+            - Name: ENV_CONFIGURATION
+              Value: !Ref EnvConfiguration
           PortMappings:
             - ContainerPort: !Ref ContainerPort
 
