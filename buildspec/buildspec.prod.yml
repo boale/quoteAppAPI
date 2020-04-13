@@ -5,6 +5,7 @@ env:
     DOCKER_REPOSITORY_URI: ""
     CODE_CLIMATE_REPORTER_ID: ""
     CODECOV_TOKEN: ""
+    GIT_BRANCH: "master"
 
 phases:
 
