@@ -14,6 +14,7 @@ ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
 ARG GIT_BRANCH
 ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_COMMITTED_AT="$(date +%s)"
 
 RUN apk add --update
 RUN apk add unzip
@@ -22,11 +23,8 @@ RUN apk add curl
 RUN apk --no-cache add ca-certificates wget bash
 
 # Set up all necessary/required env variables and Install CodeClimate reporter.
-# export GIT_COMMIT_SHA="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION)"
-RUN export GIT_COMMITTED_AT="$(date +%s)"
 RUN curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
 RUN chmod +x cc-test-reporter
-# RUN ./cc-test-reporter before-build
 
 # use changes to package.json to force Docker not to use the cache
 # when we change our application's nodejs dependencies:
@@ -44,7 +42,6 @@ RUN npm run lint
 RUN npm test
 
 # Upload test coverage report to CodeCov and CodeClimate.
-# RUN bash <(curl -s https://codecov.io/bash) -t $CODE_COV_TOKEN
 RUN curl -s https://codecov.io/bash | bash -s -t $(echo $CODECOV_TOKEN)
 # RUN ./cc-test-reporter after-build -t lcov -r $CODE_CLIMATE_REPORTER_ID --exit-code $?
 RUN /cc-test-reporter after-build --debug -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID) -p ./coverage
