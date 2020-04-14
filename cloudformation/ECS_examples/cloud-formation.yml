@@ -1,0 +1,389 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ClusterName:
+    Type: String
+    Default: 'default'
+    Description: >-
+      Name of the Cluster that the Containers will be deployed to.
+  LaunchType:
+    Type: String
+    Default: FARGATE
+    AllowedValues:
+      - FARGATE
+      - EC2
+    Description: Do you want to deploy this as FARGATE or EC2
+  LoadBalancerCertificateArn:
+    Description: >-
+      Optional Amazon Resource Name (ARN) of the certificate to associate with
+      the load balancer.
+    Type: String
+  NodeEnvValue:
+    Type: String
+    Default: 'production'
+  EnvConfiguration:
+    Type: String
+    Default: 'test'
+  DynatraceCustomProp:
+    Type: String
+    Default: ''
+  DynatraceClusterId:
+    Type: String
+    Default: ''
+  MinimumNumberOfTasks:
+    Type: Number
+    Default: '1'
+    Description: >-
+      The lower boundary to which Service Auto Scaling can adjust your service’s
+      desired count.
+  DesiredNumberOfTasks:
+    Type: Number
+    Default: '1'
+    Description: >-
+      The initial desired count to start with before Service Auto Scaling begins
+      adjustment.
+  MaximumNumberOfTasks:
+    Type: Number
+    Default: '1'
+    Description: >-
+      The upper boundary to which Service Auto Scaling can adjust your service’s
+      desired count
+  CPUHighThreshold:
+    Type: Number
+    Default: '75'
+  CPULowThreshold:
+    Type: Number
+    Default: '30'
+  VPC:
+    Description: The VPC that the ECS cluster is deployed to
+    Type: 'AWS::EC2::VPC::Id'
+  Priority:
+    Type: Number
+    Default: '1'
+    Description: The priority for the rules.
+  Path:
+    Description: The path to register with the Application Load Balancer
+    Type: String
+    Default: /*
+  HealthCheckPath:
+    Description: The path for Healthcheck
+    Type: String
+    Default: /ping
+  Image:
+    Description: Docker image link
+    Type: String
+  ContainerPort:
+    Description: This is the Container Port
+    Type: Number
+    Default: 80
+  ECSTaskExecutionRole:
+    Type: String
+    Description: Task Execution Role
+  ECSAutoScalingRole:
+    Type: String
+    Description: Service Auto Scaling Role
+  HostedZoneResource:
+    Description: ''
+    Type: String
+    Default: ''
+  HostedZoneResourceId:
+    Description: ''
+    Type: String
+    Default: ''
+  LoadBalancerSubnetIds:
+    Type: 'List<AWS::EC2::Subnet::Id>'
+    Description: List of public Subnet Ids for the Load Balancer
+    ConstraintDescription: must be list of Subnet ids
+  ECSSubnetIds:
+    Type: 'List<AWS::EC2::Subnet::Id>'
+    Description: List of private Subnet Ids for the ECS
+    ConstraintDescription: must be list of Subnet ids
+
+Conditions:
+  HasLoadBalancerCertificateArn: !Not
+    - !Equals
+      - !Ref LoadBalancerCertificateArn
+      - ''
+
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the load balancer that sits in front of ECS
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - LoadBalancers
+
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Sub 'LB-${AWS::StackName}'
+      Subnets: !Ref LoadBalancerSubnetIds
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref 'AWS::StackName'
+
+  ECSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Access to the ECS  tasks/containers that run on them
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          IpProtocol: -1
+      Tags:
+        - Key: Name
+          Value: !Join
+            - '-'
+            - - !Ref 'AWS::StackName'
+              - ECS-Hosts
+
+  CloudwatchLogsGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '${AWS::StackName}-ECSLogGroup'
+      RetentionInDays: 14
+
+  ContainerTaskdefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: !Ref 'AWS::StackName'
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      TaskRoleArn: !Ref ECSTaskExecutionRole
+      Cpu: '512'
+      Memory: 1GB
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - EC2
+        - FARGATE
+      ContainerDefinitions:
+        - Name: !Ref 'AWS::StackName'
+          Cpu: 10
+          Essential: 'true'
+          Image: !Ref Image
+          Memory: '1024'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref CloudwatchLogsGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: NODE_ENV
+              Value: !Ref NodeEnvValue
+            - Name: PORT
+              Value: !Ref ContainerPort
+            - Name: ENV_CONFIGURATION
+              Value: !Ref EnvConfiguration
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+
+  ECSService:
+    Type: 'AWS::ECS::Service'
+    DependsOn: ListenerRule
+    Properties:
+      ServiceName: !Ref 'AWS::StackName'
+      Cluster: !Ref ClusterName
+      DesiredCount: !Ref DesiredNumberOfTasks
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      LaunchType: !Ref LaunchType
+      HealthCheckGracePeriodSeconds: 300
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref ECSSecurityGroup
+          Subnets: !Ref ECSSubnetIds
+      TaskDefinition: !Ref ContainerTaskdefinition
+      LoadBalancers:
+        - ContainerName: !Ref 'AWS::StackName'
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroup
+
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      VpcId: !Ref VPC
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+
+  LoadBalancerListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  ListenerRule:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      ListenerArn: !Ref LoadBalancerListener
+      Priority: !Ref Priority
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - !Ref Path
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+
+  LoadBalancerHTTPSListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Condition: HasLoadBalancerCertificateArn
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Certificates:
+        - CertificateArn: !Ref LoadBalancerCertificateArn
+      Port: 443
+      Protocol: HTTPS
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  ListenerHTTPSRule:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Condition: HasLoadBalancerCertificateArn
+    Properties:
+      ListenerArn: !Ref LoadBalancerHTTPSListener
+      Priority: !Ref Priority
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - !Ref Path
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+
+  Route53:
+    Type: AWS::Route53::RecordSet
+    DependsOn: LoadBalancer
+    Properties:
+      HostedZoneName: !Ref 'HostedZoneResource'
+      Name: !Join
+        - '.'
+        - - !Ref 'AWS::StackName'
+          - !Ref 'HostedZoneResource'
+      Type: A
+      AliasTarget:
+        DNSName: !Join
+          - '.'
+          - - 'dualstack'
+            - !GetAtt LoadBalancer.DNSName
+        EvaluateTargetHealth: false
+        HostedZoneId: !Ref 'HostedZoneResourceId'
+
+  ServiceScalingTarget:
+    Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+    DependsOn: ECSService
+    Properties:
+      MaxCapacity: !Ref MaximumNumberOfTasks
+      MinCapacity: !Ref MinimumNumberOfTasks
+      ResourceId: !Join
+        - /
+        - - service
+          - !Ref ClusterName
+          - !Ref 'AWS::StackName'
+      RoleARN: !Ref ECSAutoScalingRole
+      ScalableDimension: 'ecs:service:DesiredCount'
+      ServiceNamespace: ecs
+
+  ServiceScaleUpPolicy:
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyName: ScaleUpPolicy
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: PercentChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        MinAdjustmentMagnitude: 2
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            ScalingAdjustment: 200
+
+  CPUHighAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: Containers CPU Utilization High
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '1'
+      Threshold: !Ref CPUHighThreshold
+      AlarmActions:
+        - !Ref ServiceScaleUpPolicy
+      Dimensions:
+        - Name: ServiceName
+          Value: !Ref 'AWS::StackName'
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+  ServiceScaleDownPolicy:
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyName: ScaleDownPolicy
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: PercentChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        MinAdjustmentMagnitude: 1
+        StepAdjustments:
+          - MetricIntervalUpperBound: 0
+            ScalingAdjustment: -50
+
+  CPULowAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: Containers CPU Utilization Low
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '1'
+      Threshold: !Ref CPULowThreshold
+      AlarmActions:
+        - !Ref ServiceScaleDownPolicy
+      Dimensions:
+        - Name: ServiceName
+          Value: !Ref 'AWS::StackName'
+        - Name: ClusterName
+          Value: !Ref ClusterName
+      ComparisonOperator: LessThanOrEqualToThreshold
+
+Outputs:
+  ECSService:
+    Value: !Ref ECSService
+  taskdef:
+    Value: !Ref ContainerTaskdefinition
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt LoadBalancer.DNSName
+  Route53:
+    Value: !Ref Route53

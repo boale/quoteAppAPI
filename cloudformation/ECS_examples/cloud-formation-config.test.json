@@ -1,0 +1,17 @@
+{
+  "Parameters" : {
+    "ClusterName": "",
+    "Image": "",
+    "HostedZoneResource": "",
+    "HostedZoneResourceId": "",
+    "EnvConfiguration": "",
+    "DesiredNumberOfTasks": "1",
+    "MaximumNumberOfTasks": "1",
+    "VPC": "",
+    "LoadBalancerSubnetIds": "",
+    "ECSSubnetIds": "",
+    "ECSTaskExecutionRole": "",
+    "ECSAutoScalingRole": "",
+    "LoadBalancerCertificateArn": ""
+  }
+}
