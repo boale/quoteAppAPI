@@ -3,8 +3,8 @@ version: 0.2
 env:
   variables:
     CODE_CLIMATE_REPORTER_ID: ""
-    CODECOV_TOKEN: ""
-    GIT_BRANCH: "master"
+    GIT_BRANCH: master
+    CI_NAME: CodeBuild
 
 phases:
 
@@ -15,5 +15,5 @@ phases:
   build:
     commands:
       - echo Runninging code quality tools.
-      - docker build --build-arg ENV_CONFIGURATION=production --build-arg CODE_CLIMATE_REPORTER_ID=$CODE_CLIMATE_REPORTER_ID --build-arg CODECOV_TOKEN=$CODECOV_TOKEN --build-arg GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION --build-arg GIT_BRANCH=${GIT_BRANCH} -f Dockerfile_quality .
+      - docker build --build-arg ENV_CONFIGURATION=production --build-arg CODE_CLIMATE_REPORTER_ID=$CODE_CLIMATE_REPORTER_ID --build-arg CI_NAME=$CI_NAME --build-arg GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION --build-arg GIT_BRANCH=$GIT_BRANCH -f Dockerfile_quality .
       - echo Code Quality check is passed

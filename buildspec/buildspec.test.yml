@@ -4,8 +4,8 @@ env:
   variables:
     DOCKER_REPOSITORY_URI: ""
     CODE_CLIMATE_REPORTER_ID: ""
-    CODECOV_TOKEN: ""
     GIT_BRANCH: "develop"
+    CI_NAME: CodeBuild
 
 phases:
 
@@ -19,7 +19,7 @@ phases:
       - IMAGE_TAG=${COMMIT_HASH:=latest}
 
       - echo Runninging code quality tools.
-      - docker build --build-arg ENV_CONFIGURATION=test --build-arg CODE_CLIMATE_REPORTER_ID=$CODE_CLIMATE_REPORTER_ID --build-arg CODECOV_TOKEN=$CODECOV_TOKEN --build-arg GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION --build-arg GIT_BRANCH=${GIT_BRANCH} -f Dockerfile_quality .
+      - docker build --build-arg ENV_CONFIGURATION=test --build-arg CODE_CLIMATE_REPORTER_ID=$CODE_CLIMATE_REPORTER_ID --build-arg CI_NAME=$CI_NAME --build-arg GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION --build-arg GIT_BRANCH=${GIT_BRANCH} -f Dockerfile_quality .
       - echo Code Quality check is passed
 
       - echo Logging in to Amazon ECR.

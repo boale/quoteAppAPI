@@ -3,12 +3,10 @@ FROM node:12-alpine
 ARG ENV_CONFIGURATION="test"
 ENV ENV_CONFIGURATION=$ENV_CONFIGURATION
 
-# CodeCov environment varibale:
-ARG CODECOV_TOKEN
-ENV CODECOV_TOKEN=$CODECOV_TOKEN
-
 # CodeClimate reporter environment varibales:
 ARG CODE_CLIMATE_REPORTER_ID
+ARG CI_NAME
+ENV CI_NAME=$CI_NAME
 ENV CODE_CLIMATE_REPORTER_ID=$CODE_CLIMATE_REPORTER_ID
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
@@ -40,7 +38,6 @@ RUN npm run lint
 RUN npm test
 
 # Upload test coverage report to CodeCov and CodeClimate.
-RUN curl -s https://codecov.io/bash | bash -s -- -t $(echo $CODECOV_TOKEN)
 RUN export GIT_COMMITTED_AT="$(date +%s)" && /cc-test-reporter after-build -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID) -p ./coverage
 
 # Code quality check completed!
