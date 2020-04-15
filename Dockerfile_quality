@@ -40,7 +40,7 @@ RUN npm run lint
 RUN npm test
 
 # Upload test coverage report to CodeCov and CodeClimate.
-RUN curl -s https://codecov.io/bash | bash -s -t $(echo $CODECOV_TOKEN)
+RUN curl -s https://codecov.io/bash | bash -s -- -t $(echo $CODECOV_TOKEN)
 RUN export GIT_COMMITTED_AT="$(date +%s)" && /cc-test-reporter after-build -t lcov -r $(echo $CODE_CLIMATE_REPORTER_ID) -p ./coverage
 
 # Code quality check completed!
