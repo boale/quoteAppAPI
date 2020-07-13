@@ -44,7 +44,7 @@
     "eslint-plugin-node": "^11.1.0",
     "husky": "^4.2.5",
     "jest": "^25.3.0",
-    "standard-version": "^7.1.0",
+    "standard-version": "^8.0.1",
     "supertest": "^4.0.2"
   },
   "dependencies": {
