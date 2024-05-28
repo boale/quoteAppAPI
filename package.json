@@ -52,7 +52,7 @@
     "@mindjs/core": "^1.2.0",
     "@mindjs/platform-koa": "^1.2.0",
     "@mindjs/routing": "^1.2.0",
-    "pm2": "^4.3.0",
+    "pm2": "^5.0.0",
     "quotesy": "^1.0.5"
   }
 }
